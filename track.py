@@ -31,6 +31,8 @@ class Track:
         pass
 
 class FermatSpiralTrack(Track):
+
+    #number of turns, phi_start should not be needed
     def __init__(self, r_max, n_turns, phi_start, neg_branch, next_track):
         self.phi_max = n_turns * 2 * np.pi
         self.a = r_max / np.sqrt(self.phi_max)
@@ -65,12 +67,13 @@ class ArcTrack(Track):
     def __init__(self, center, r, phi_start, phi_end, invert_phi, next_track):
         self.center, self.r, self.phi_start, self.phi_end = center, r, phi_start, phi_end
         self.invert_phi=invert_phi
-        Track.__init__(self, r * (phi_end-phi_start), next_track)
+        Track.__init__(self, r * np.abs((phi_end-phi_start)), next_track)
 
     def _vertices_normals(self, tline_xs):
         self.phis = tline_xs / self.r + self.phi_start
         if self.invert_phi:
-            self.phis*=-1
+            self.phis *= -1
+        #     # self.phis = np.flip(self.phis, axis=0) #added so arc sections not in reverse
         v = np.array((self.r * np.cos(self.phis) + self.center[0],
                          self.r * np.sin(self.phis) + self.center[1],
                          np.cos(self.phis),
@@ -81,13 +84,46 @@ class ArcTrack(Track):
 
 if __name__ == '__main__':
     Rspiral = 20e-3
-    launch_angle = np.pi/6
-    Rlaunch = Rspiral * np.sin(launch_angle) / (1-np.sin(launch_angle))
-    track4 = ArcTrack(((Rlaunch+Rspiral)*np.cos(launch_angle),-Rlaunch), Rlaunch, np.pi+launch_angle, 3/2*np.pi, True, next_track=None)
-    track3 = FermatSpiralTrack(Rspiral, 6, np.pi-launch_angle, True, next_track=track4)
-    track2 = FermatSpiralTrack(Rspiral, 6, np.pi-launch_angle, False, next_track=track3)
-    track1 = ArcTrack((-(Rlaunch+Rspiral)*np.cos(launch_angle), Rlaunch), Rlaunch, 3/2 * np.pi, 2*np.pi-launch_angle, False, next_track=track2)
-    arclengths = np.arange(0, track1.total_arclength(), 1e-5) #track1.arclength+track2.arclength*0.99, track1.arclength+track2.arclength*1.01, 1e-6) 
+    launch_angle = 0
+    turns = 1.95
+    final_angle = turns * 2 * np.pi - (2 * np.pi) * (turns // 1)
+    Rlaunch = 10e-3
+
+    arc1 = ArcTrack((-Rspiral * np.cos(final_angle) - Rlaunch * np.cos(final_angle),
+                           -Rspiral * np.sin(final_angle) - Rlaunch * np.sin(final_angle)),
+                          Rlaunch, 3/2*np.pi, final_angle, False, next_track=None)
+    fermat1 = FermatSpiralTrack(Rspiral, turns, 0, True, next_track=arc1)
+    fermat2 = FermatSpiralTrack(Rspiral, turns, 0, False, next_track=fermat1)
+    arc2 = ArcTrack(
+        ((Rspiral + Rlaunch) * np.cos(final_angle), Rspiral * np.sin(final_angle) + Rlaunch * np.sin(final_angle)),
+        Rlaunch,
+        np.pi / 2, final_angle % np.pi, False, next_track=fermat2)
+
+    track1 = arc2
+    track2 = fermat2
+    track3 = fermat1
+    track4 = arc1
+
+    initial_track = track1
+    arclengths = np.arange(0, initial_track.total_arclength(), 1e-5)
+    xs, ys, us, vs = initial_track.vertices_normals(arclengths)
+    fig, axs = plt.subplots()
+    axs.set_aspect('equal')
+    axs.quiver(xs, ys, us, vs, scale_units='width', scale=100)
+
+
+    # #Rlaunch = Rspiral * np.sin(launch_angle) / (1-np.sin(launch_angle))
+    # #Rlaunch = Rspiral * np.sin(launch_angle + 2*np.pi*turns) / (1 - np.sin(launch_angle + 2*np.pi*turns))
+    # #track4 = ArcTrack(((Rlaunch+Rspiral)*np.cos(launch_angle),-Rlaunch), Rlaunch, np.pi+launch_angle, 3/2*np.pi, True, next_track=None)
+    # track4 = ArcTrack(((Rlaunch + Rspiral), -Rlaunch), Rlaunch,
+    #                   0, -2*np.pi/3, True, next_track=None)
+    # track3 = FermatSpiralTrack(Rspiral, turns, np.pi-launch_angle, True, next_track=track4)
+    # track2 = FermatSpiralTrack(Rspiral, turns, np.pi-launch_angle, False, next_track=track3)
+    # #track1 = ArcTrack((-(Rlaunch+Rspiral)*np.cos(launch_angle), Rlaunch), Rlaunch, 3/2 * np.pi, 2*np.pi-launch_angle, False, next_track=track2)
+    # track1 = ArcTrack((-(Rlaunch + Rspiral), Rlaunch), Rlaunch, 0,
+    #                   final_angle, False, next_track=track2)
+
+    arclengths = np.arange(0, track1.total_arclength(), 1e-5) #track1.arclength+track2.arclength*0.99, track1.arclength+track2.arclength*1.01, 1e-6)
     xs, ys, us, vs = track1.vertices_normals(arclengths)
     fig, axs = plt.subplots()
     axs.set_aspect('equal')

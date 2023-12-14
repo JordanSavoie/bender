@@ -13,12 +13,12 @@ class Track:
         self.arclength, self.next_track = arclength, next_track
 
     def vertices_normals(self, arclengths):
-        local_vertices_normals = self._vertices_normals(arclengths[arclengths < self.arclength])
+        local_vertices_normals = self._vertices_normals(arclengths[arclengths <= self.arclength])
         if self.next_track is None:
             return local_vertices_normals
         else:
             return np.append(local_vertices_normals,
-                         self.next_track.vertices_normals(arclengths[arclengths >= self.arclength] - self.arclength),
+                         self.next_track.vertices_normals(arclengths[arclengths > self.arclength] - self.arclength),
                          axis = 1)
 
     def total_arclength(self):
@@ -67,7 +67,7 @@ class ArcTrack(Track):
     def __init__(self, center, r, phi_start, phi_end, invert_phi, next_track):
         self.center, self.r, self.phi_start, self.phi_end = center, r, phi_start, phi_end
         self.invert_phi=invert_phi
-        Track.__init__(self, r * np.abs((phi_end-phi_start)), next_track)
+        Track.__init__(self, r * (phi_end-phi_start), next_track)
 
     def _vertices_normals(self, tline_xs):
         self.phis = tline_xs / self.r + self.phi_start
@@ -85,13 +85,13 @@ class ArcTrack(Track):
 if __name__ == '__main__':
     Rspiral = 20e-3
     launch_angle = 0
-    turns = 1.95
-    final_angle = turns * 2 * np.pi - (2 * np.pi) * (turns // 1)
-    Rlaunch = 10e-3
+    turns = 1.9
+    final_angle = 2 * np.pi * (turns % 1)
+    Rlaunch = 30e-3
 
     arc1 = ArcTrack((-Rspiral * np.cos(final_angle) - Rlaunch * np.cos(final_angle),
                            -Rspiral * np.sin(final_angle) - Rlaunch * np.sin(final_angle)),
-                          Rlaunch, 3/2*np.pi, final_angle, False, next_track=None)
+                          Rlaunch, -final_angle % np.pi, 1/2*np.pi, True, next_track=None)
     fermat1 = FermatSpiralTrack(Rspiral, turns, 0, True, next_track=arc1)
     fermat2 = FermatSpiralTrack(Rspiral, turns, 0, False, next_track=fermat1)
     arc2 = ArcTrack(

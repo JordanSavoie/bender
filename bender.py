@@ -1,5 +1,6 @@
 import track, tline
 import numpy as np, matplotlib.pyplot as plt
+import ezdxf
 
 
 class Bender:  # uh oh
@@ -19,12 +20,16 @@ if __name__ == '__main__':
     floquet.append_fishbones(fishboneA, 5)
     floquet.append_fishbones(fishboneB, 3)
     floquet.append_fishbones(fishboneA, 5)
-    floquet_vertices = floquet.vertices()
+    #floquet_vertices = floquet.vertices()
+    xs, ys = floquet.vertices()
+    xs = np.append(xs, [xs[-1], xs[0], xs[0]])
+    ys = np.append(ys, [fishboneB.fishbone_height + 2e-6, fishboneB.fishbone_height + 2e-6, ys[0]])
+    floquet_vertices = np.array((xs,ys))
     # print("floquet vertices")
     # print(floquet_vertices)
     # print("end")
-    floquet_cell_length = floquet_vertices[0, -1]
-    #print(floquet_cell_length)
+    floquet_cell_length = floquet_vertices[0, -3]
+    print(floquet_vertices)
 
     # arbitrary turn version
 
@@ -36,7 +41,7 @@ if __name__ == '__main__':
 
     arc1 = track.ArcTrack((-Rspiral * np.cos(final_angle) - Rlaunch * np.cos(final_angle),
                      -Rspiral * np.sin(final_angle) - Rlaunch * np.sin(final_angle)),
-                    Rlaunch, 3 / 2 * np.pi, final_angle, False, next_track=None)
+                    Rlaunch, -final_angle % np.pi, 1 / 2 * np.pi, True, next_track=None)
     fermat1 = track.FermatSpiralTrack(Rspiral, turns, 0, True, next_track=arc1)
     fermat2 = track.FermatSpiralTrack(Rspiral, turns, 0, False, next_track=fermat1)
     arc2 = track.ArcTrack(
@@ -78,8 +83,6 @@ if __name__ == '__main__':
     tline_vertices = np.load('tline_vertices.npy')
 
     arclengths, heights = tline_vertices
-    arclengths = arclengths
-    heights = heights
     xs, ys, us, vs = track1.vertices_normals(arclengths)
 
 
@@ -87,6 +90,21 @@ if __name__ == '__main__':
     bent_xs_mirror = xs - us * heights[:len(us)]
     bent_ys = ys + vs * heights[:len(vs)]
     bent_ys_mirror = ys - vs*heights[:len(vs)]
+
+    merged_list = [(bent_xs[i], bent_ys[i]) for i in range(0, 16000)]
+    merge_list_mir = [(bent_xs_mirror[i], bent_ys_mirror[i]) for i in range(0, 16000)]
+
+    merged_list_2 = [(bent_xs[i], bent_ys[i]) for i in range(32001, 64000)]
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    #polyline = msp.add_lwpolyline(merged_list, close=False)
+    polyline = msp.add_polyline2d(merged_list + merge_list_mir[::-1], close=True)
+    #p2 = msp.add_polyline2d(merged_list_2, close=False)
+    print(len(polyline.vertices))
+
+    # Save the DXF file
+    doc.saveas("spiral.dxf")
 
     fig, axs = plt.subplots()
     axs.set_aspect('equal')

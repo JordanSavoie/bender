@@ -31,8 +31,6 @@ class FishboneUnitCell:
                  self.fishbone_height + self.line_width / 2, self.line_width / 2,
                  self.line_width / 2 ]
         #changed this to make fishbone unit symmetric
-        xvals = np.append(xvals1, [xvals1[-1], xvals1[0], xvals1[0]])
-        yvals = np.append(yvals1, [self.fishbone_height + 2e-6, self.fishbone_height + 2e-6, yvals1[0]])
 
         return np.array((xvals1, yvals1))
 
@@ -114,13 +112,13 @@ class FloquetUnitCell:
         v=self.fishbones[-1].vertices_gnd()
         xstart=(len(self.fishbones)-1)*self.fishbones[0].cell_length
         v[0,:] += xstart
-        for fishbone in self.fishbones[::-1]:
+        for fishbone in reversed(self.fishbones[0:-1]):
             fishbone_vertices=fishbone.vertices_gnd()
             #print(fishbone_vertices)
-            fishbone_vertices[0,:]+=xstart
+            fishbone_vertices[0,:]-=xstart
             v=np.append(v, fishbone_vertices, axis = 1)
-            xstart -= fishbone.cell_length
-
+            xstart += fishbone.cell_length/2
+            print(xstart)
         return v
 
 
@@ -128,9 +126,9 @@ if __name__=='__main__':
     fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
     #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
     floquet = FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 3)
-    floquet.append_fishbones(fishboneB, 5)
-    floquet.append_fishbones(fishboneA, 3)
+    floquet.append_fishbones(fishboneA, 1)
+    floquet.append_fishbones(fishboneB, 1)
+    # floquet.append_fishbones(fishboneA, 3)
     xs, ys = floquet.vertices()
     xgnd, ygnd = floquet.vertices_gnd()
 
@@ -160,7 +158,7 @@ if __name__=='__main__':
     merged_list_gnd = [(xgnd[i], ygnd[i]) for i in range(0, len(xgnd))]
     merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
     merged_list_mir_gnd = [(xgnd[i], mir_ygnd[i]) for i in range(0, len(xgnd))]
-    # print(merged_list)
+    print(merged_list_gnd)
 
 
     doc = ezdxf.new()
@@ -172,5 +170,5 @@ if __name__=='__main__':
     # Save the DXF file
     doc.saveas("unitcell.dxf")
 
-    print(merged_list)
+    # print(merged_list)
 

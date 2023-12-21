@@ -115,9 +115,9 @@ class FloquetUnitCell:
         for fishbone in reversed(self.fishbones[0:-1]):
             fishbone_vertices=fishbone.vertices_gnd()
             #print(fishbone_vertices)
-            fishbone_vertices[0,:]-=xstart
+            # fishbone_vertices[0,:]-=xstart
             v=np.append(v, fishbone_vertices, axis = 1)
-            xstart += fishbone.cell_length/2
+            # xstart += fishbone.cell_length
             print(xstart)
         return v
 
@@ -127,7 +127,7 @@ if __name__=='__main__':
     #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
     floquet = FloquetUnitCell()
     floquet.append_fishbones(fishboneA, 1)
-    floquet.append_fishbones(fishboneB, 1)
+    # floquet.append_fishbones(fishboneB, 1)
     # floquet.append_fishbones(fishboneA, 3)
     xs, ys = floquet.vertices()
     xgnd, ygnd = floquet.vertices_gnd()
@@ -149,9 +149,13 @@ if __name__=='__main__':
     mir_ygnd = -ygnd
 
     fig,ax=plt.subplots()
-    ax.plot(xs,ys,marker='.')
-    ax.plot(xgnd, ygnd, marker='.')
+    ax.scatter(xs,ys,c = np.arange(len(xs)),marker='.', cmap = 'coolwarm')
+    ax.scatter(xgnd, ygnd, c = np.arange(len(xgnd)), marker='.', cmap = 'coolwarm')
     ax.set_ylim(0,None)
+    plt.show()
+    fig,ax = plt.subplots()
+    ax.plot(xs, ys, marker = '.')
+    ax.plot(xgnd, ygnd, marker = '.')
     plt.show()
 
     merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]

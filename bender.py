@@ -1,6 +1,7 @@
 import track, tline
 import numpy as np, matplotlib.pyplot as plt
 import ezdxf
+from ezdxf import units
 
 
 class Bender:  # uh oh
@@ -12,49 +13,52 @@ class Bender:  # uh oh
 
 
 if __name__ == '__main__':
-    fishboneA, fishboneB = tline.FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), tline.FishboneUnitCell(4e-6, 2e-6, 100e-6,
+    fishboneA, fishboneB = tline.FishboneUnitCell(40e-6, 2e-6, 25e-6, 2e-6), tline.FishboneUnitCell(4e-6, 2e-6, 100e-6,
                                                                                                    2e-6)
 
     # fishboneA, fishboneB = tline.FishboneUnitCell(5e-6, 10e-6, 1e-6), tline.FishboneUnitCell(7.5e-6, 20e-6, 1e-6)
     floquet = tline.FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 5)
-    floquet.append_fishbones(fishboneB, 3)
-    floquet.append_fishbones(fishboneA, 5)
-    #floquet_vertices = floquet.vertices()
+    floquet.append_fishbones(fishboneA, 3)
+    # floquet.append_fishbones(fishboneB, 1)
+    # floquet.append_fishbones(fishboneA, 10)
     xs, ys = floquet.vertices()
-    xs = np.append(xs, [xs[-1], xs[0], xs[0]])
-    ys = np.append(ys, [fishboneB.fishbone_height + 2e-6, fishboneB.fishbone_height + 2e-6, ys[0]])
-    floquet_vertices = np.array((xs,ys))
-    # print("floquet vertices")
-    # print(floquet_vertices)
-    # print("end")
-    floquet_cell_length = floquet_vertices[0, -3]
-    print(floquet_vertices)
+    unit_cell_vertices_count = len(xs)
+    xgnd, ygnd = floquet.vertices_gnd()
+    unit_cell_vertices_count_gnd = len(xgnd)
+    floquet_cell_length = xs[-1]
+    floquet_vertices = floquet.vertices()
+    floquet_vertices_gnd = floquet.vertices_gnd()
+
+
+    Rspiral = 10e-3
+    launch_angle = 0
+    turns = 0.01#1.950620200000362
+    final_angle = turns * 2 * np.pi - (2 * np.pi) * (turns // 1)
 
     # arbitrary turn version
 
-    Rspiral = 20e-3
-    launch_angle = 0
-    turns = 1.95
-    final_angle = turns * 2 * np.pi - (2 * np.pi) * (turns //1)
+
     Rlaunch = 10e-3
 
-    arc1 = track.ArcTrack((-Rspiral * np.cos(final_angle) - Rlaunch * np.cos(final_angle),
-                     -Rspiral * np.sin(final_angle) - Rlaunch * np.sin(final_angle)),
-                    Rlaunch, -final_angle % np.pi, 1 / 2 * np.pi, True, next_track=None)
-    fermat1 = track.FermatSpiralTrack(Rspiral, turns, 0, True, next_track=arc1)
+    # arc1 = track.ArcTrack((-Rspiral * np.cos(final_angle) - Rlaunch * np.cos(final_angle),
+    #                  -Rspiral * np.sin(final_angle) - Rlaunch * np.sin(final_angle)),
+    #                 Rlaunch, -final_angle % np.pi, 1 / 2 * np.pi, True, next_track=None)
+    fermat1 = track.FermatSpiralTrack(Rspiral, turns, 0, True, next_track=None)
     fermat2 = track.FermatSpiralTrack(Rspiral, turns, 0, False, next_track=fermat1)
-    arc2 = track.ArcTrack(
-        ((Rspiral + Rlaunch) * np.cos(final_angle), Rspiral * np.sin(final_angle) + Rlaunch * np.sin(final_angle)),
-        Rlaunch,
-        np.pi / 2, final_angle % np.pi, False, next_track=fermat2)
+    # arc2 = track.ArcTrack(
+    #     ((Rspiral + Rlaunch) * np.cos(final_angle), Rspiral * np.sin(final_angle) + Rlaunch * np.sin(final_angle)),
+    #     Rlaunch,
+    #     np.pi / 2, final_angle % np.pi, False, next_track=fermat2)
 
 
 
-    track1 = arc2
-    track2 = fermat2
-    track3 = fermat1
-    track4 = arc1
+    # track1 = arc2
+    # track2 = fermat2
+    # track3 = fermat1
+    # track4 = arc1
+
+    track1 = fermat2
+
 
     # Rspiral = 20e-3
     # launch_angle = np.pi/6
@@ -67,7 +71,10 @@ if __name__ == '__main__':
 
 
     arclength = track1.total_arclength()
-    n_floquet_cells = int(np.floor(arclength / floquet_cell_length))
+    n_floquet_cells = int(np.floor(arclength / floquet_cell_length)-1)
+    print(n_floquet_cells)
+    print((arclength / floquet_cell_length))
+
 
     try:
         with open('tline_vertices.npy') as f:
@@ -80,41 +87,101 @@ if __name__ == '__main__':
             tline_vertices = np.append(tline_vertices, floquet_vertices + offset, axis=1)
         np.save('tline_vertices', tline_vertices)
 
+    try:
+        with open('tline_vertices_gnd.npy') as f:
+            pass
+    except FileNotFoundError:
+        tline_vertices_gnd = np.array([[], []])
+        offset = np.array([[0.0], [0.0]])
+        for i in range(n_floquet_cells):
+            offset += np.array([[floquet_cell_length], [0.0]])
+            tline_vertices_gnd = np.append(tline_vertices_gnd, floquet_vertices_gnd + offset, axis=1)
+        np.save('tline_vertices_gnd', tline_vertices_gnd)
+
     tline_vertices = np.load('tline_vertices.npy')
+    tline_vertices_gnd = np.load('tline_vertices_gnd.npy')
 
     arclengths, heights = tline_vertices
+    arclengths_gnd, heights_gnd = tline_vertices_gnd
     xs, ys, us, vs = track1.vertices_normals(arclengths)
+    xgnd, ygnd, ugnd, vgnd = track1.vertices_normals(arclengths_gnd)
+    print(arclengths_gnd)
 
 
-    bent_xs = xs + us * heights[:len(us)] #for some reason heights is too long
-    bent_xs_mirror = xs - us * heights[:len(us)]
-    bent_ys = ys + vs * heights[:len(vs)]
-    bent_ys_mirror = ys - vs*heights[:len(vs)]
+    bent_xs = xs + us* heights #for some reason heights is too long
+    bent_xs_mirror = xs - us* heights
+    bent_ys = ys + vs* heights
+    bent_ys_mirror = ys - vs*heights
 
-    merged_list = [(bent_xs[i], bent_ys[i]) for i in range(0, 16000)]
-    merge_list_mir = [(bent_xs_mirror[i], bent_ys_mirror[i]) for i in range(0, 16000)]
+    bent_xs_gnd = xgnd + ugnd * heights_gnd
+    bent_xs_gnd_mirror = xgnd - ugnd * heights_gnd
+    bent_ys_gnd = ygnd + vgnd * heights_gnd
+    bent_ys_gnd_mirror = ygnd - vgnd * heights_gnd
 
-    merged_list_2 = [(bent_xs[i], bent_ys[i]) for i in range(32001, 64000)]
+    # xs, ys = arclengths, heights
+    # xgnd, ygnd = arclengths_gnd, heights_gnd
+    #
+    # bent_xs = xs
+    # bent_xs_mirror = xs
+    # bent_ys = ys
+    # bent_ys_mirror = ys
+    #
+    # bent_xs_gnd = xgnd
+    # bent_xs_gnd_mirror = xgnd
+    # bent_ys_gnd = ygnd
+    # bent_ys_gnd_mirror = ygnd
 
     doc = ezdxf.new()
     msp = doc.modelspace()
-    #polyline = msp.add_lwpolyline(merged_list, close=False)
-    polyline = msp.add_polyline2d(merged_list + merge_list_mir[::-1], close=True)
-    #p2 = msp.add_polyline2d(merged_list_2, close=False)
-    print(len(polyline.vertices))
+    doc.units = units.M
+
+    print(arclengths_gnd)
+
+
+    for k in range(n_floquet_cells-1):
+        j = k+1
+        merged_list = [(bent_xs[i], bent_ys[i]) for i in range((j-1) * unit_cell_vertices_count, j * unit_cell_vertices_count)]
+        merged_list_gnd = [(bent_xs_gnd[i], bent_ys_gnd[i]) for i in range((j-1) * unit_cell_vertices_count_gnd, j * unit_cell_vertices_count_gnd)]
+
+        merged_list_mir = [(bent_xs_mirror[i], bent_ys_mirror[i]) for i in range((j-1) * unit_cell_vertices_count, j * unit_cell_vertices_count)]
+        merged_list_gnd_mir = [(bent_xs_gnd_mirror[i], bent_ys_gnd_mirror[i]) for i in
+                           range((j - 1) * unit_cell_vertices_count_gnd, j * unit_cell_vertices_count_gnd)]
+
+        # merged_list_gnd[0] = (merged_list[-1][0], merged_list_gnd[0][1])
+        # merged_list_gnd_mir[0] = (merged_list_mir[-1][0], merged_list_gnd_mir[0][1])
+        msp.add_lwpolyline(merged_list, close=False)
+        msp.add_lwpolyline(merged_list_gnd, close = False)
+        msp.add_lwpolyline(merged_list_mir + merged_list_gnd_mir, close=True)
+        # print(merged_list_gnd)
+        # print(merged_list[-1][0])
+        # print(merged_list_gnd[0][0])
+        # print(merged_list_gnd[-1][0])
+        # print("***")
+
+
+
 
     # Save the DXF file
-    doc.saveas("spiral.dxf")
+    doc.saveas("justspiral.dxf")
 
     fig, axs = plt.subplots()
     axs.set_aspect('equal')
-    A = 40e-3
-    axs.set_xlim(-A, A), axs.set_ylim(-A, A)
-    plt.plot(bent_xs, bent_ys, c='b', marker='.')
-    plt.plot(bent_xs_mirror, bent_ys_mirror, c='r', marker='.')
-
-    xs, ys, _, _ = track1.vertices_normals(np.array([0, track1.arclength, track1.arclength + track2.arclength,
-                                                     track1.arclength + track2.arclength + track3.arclength,
-                                                     track1.arclength + track2.arclength + track3.arclength + track4.arclength - 1e-12]))
-    axs.scatter(xs, ys, c='g', marker='*')
+    A = 20e-3
+    # axs.set_xlim(-A, A), axs.set_ylim(-A, A)
+    xx = np.append(bent_xs, bent_xs_gnd)
+    yy = np.append(bent_ys, bent_ys_gnd)
+    # plt.plot(xx, yy, c='b', marker='.')
+    # plt.plot(xs, ys, c='r', marker='.')
+    plt.plot( np.arange(len(arclengths_gnd)) , arclengths_gnd)
     plt.show()
+    # axs.quiver(xs, ys, us, vs, scale_units='width', scale=100)
+    # plt.plot(bent_xs_gnd, bent_ys_gnd, c='g', marker='.')
+
+    # xs, ys, _, _ = track1.vertices_normals(np.array([0, track1.arclength, track1.arclength + track2.arclength,
+    #                                                          track1.arclength + track2.arclength + track3.arclength,
+    #                                                          track1.arclength + track2.arclength + track3.arclength + track4.arclength - 1e-12]))
+
+    # xs, ys, _, _ = fermat1.vertices_normals(np.array([0, fermat1.arclength, fermat1.arclength + fermat1.arclength]))
+    #
+    # axs.scatter(xs, ys, c='g', marker='*')
+    # plt.show()

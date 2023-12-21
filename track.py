@@ -15,7 +15,8 @@ class Track:
     def vertices_normals(self, arclengths):
         local_vertices_normals = self._vertices_normals(arclengths[arclengths <= self.arclength])
         if self.next_track is None:
-            return local_vertices_normals
+            return self._vertices_normals(arclengths)
+            # return local_vertices_normals
         else:
             return np.append(local_vertices_normals,
                          self.next_track.vertices_normals(arclengths[arclengths > self.arclength] - self.arclength),
@@ -76,7 +77,7 @@ class FermatSpiralTrack(Track):
 
         return outer_point, outer_normal, outer_normal_phi
 
-    def construct_suitable_ArcTrack(self):
+    def construct_suitable_ArcTrack(self, Rlaunch):
         outer_point, outer_normal, outer_normal_phi = self._outer_point_normal()
         arc_center_point = outer_point + outer_normal * Rlaunch
         #final_angle = self.phi_max - np.arctan(0.5/self.phi_max)
@@ -115,8 +116,8 @@ if __name__ == '__main__':
 
     fermat1 = FermatSpiralTrack(Rspiral, turns, 0, True)
     fermat2 = FermatSpiralTrack(Rspiral, turns, 0, False)
-    arc2 = fermat2.construct_suitable_ArcTrack()
-    arc1 = fermat1.construct_suitable_ArcTrack()
+    arc2 = fermat2.construct_suitable_ArcTrack(Rlaunch)
+    arc1 = fermat1.construct_suitable_ArcTrack(Rlaunch)
     x,y = arc1.center
 
     track1 = arc2

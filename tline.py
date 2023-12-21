@@ -35,15 +35,7 @@ class FishboneUnitCell:
         return np.array((xvals1, yvals1))
 
     def vertices_gnd(self):
-        xvals1=[0,
-               self.cell_length/2 - self.fishbone_length/2, self.cell_length/2 - self.fishbone_length/2,
-               self.cell_length/2 + self.fishbone_length/2, self.cell_length/2 + self.fishbone_length/2,
-               self.cell_length]
-        yvals1 = [self.line_width / 2,
-                 self.line_width/2, self.fishbone_height + self.line_width / 2,
-                 self.fishbone_height + self.line_width / 2, self.line_width / 2,
-                 self.line_width / 2 ]
-        xvals = [xvals1[-1], xvals1[0]]
+        xvals = [self.cell_length, 0]
         yvals = [self.fishbone_height + 2e-6, self.fishbone_height + 2e-6]
 
         return np.array((xvals, yvals))
@@ -101,7 +93,6 @@ class FloquetUnitCell:
         xstart=self.fishbones[0].cell_length
         for fishbone in self.fishbones[1:]:
             fishbone_vertices=fishbone.vertices()
-            #print(fishbone_vertices)
             fishbone_vertices[0,:]+=xstart
             v=np.append(v, fishbone_vertices, axis = 1)
             xstart += fishbone.cell_length
@@ -109,26 +100,24 @@ class FloquetUnitCell:
         return v
 
     def vertices_gnd(self):
-        v=self.fishbones[-1].vertices_gnd()
-        xstart=(len(self.fishbones)-1)*self.fishbones[0].cell_length
-        v[0,:] += xstart
-        for fishbone in reversed(self.fishbones[0:-1]):
+        v = np.flip(self.fishbones[0].vertices_gnd(), axis =1)
+        xstart = self.fishbones[0].cell_length
+        for fishbone in self.fishbones[1:]:
             fishbone_vertices=fishbone.vertices_gnd()
-            #print(fishbone_vertices)
-            # fishbone_vertices[0,:]-=xstart
+            fishbone_vertices[0,:] += xstart
+            xstart += fishbone.cell_length
+            fishbone_vertices = np.flip(fishbone_vertices, axis=1)
             v=np.append(v, fishbone_vertices, axis = 1)
-            # xstart += fishbone.cell_length
-            print(xstart)
-        return v
+        return np.flip(v, axis = 1)
 
 
 if __name__=='__main__':
     fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
     #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
     floquet = FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 1)
-    # floquet.append_fishbones(fishboneB, 1)
-    # floquet.append_fishbones(fishboneA, 3)
+    floquet.append_fishbones(fishboneA, 5)
+    floquet.append_fishbones(fishboneB, 3)
+    floquet.append_fishbones(fishboneA, 7)
     xs, ys = floquet.vertices()
     xgnd, ygnd = floquet.vertices_gnd()
 
@@ -148,11 +137,11 @@ if __name__=='__main__':
     mir_ys = -ys
     mir_ygnd = -ygnd
 
-    fig,ax=plt.subplots()
-    ax.scatter(xs,ys,c = np.arange(len(xs)),marker='.', cmap = 'coolwarm')
-    ax.scatter(xgnd, ygnd, c = np.arange(len(xgnd)), marker='.', cmap = 'coolwarm')
-    ax.set_ylim(0,None)
-    plt.show()
+    # fig,ax=plt.subplots()
+    # ax.scatter(xs,ys,c = np.arange(len(xs)),marker='.', cmap = 'coolwarm')
+    # ax.scatter(xgnd, ygnd, c = np.arange(len(xgnd)), marker='.', cmap = 'coolwarm')
+    # ax.set_ylim(0,None)
+    # plt.show()
     fig,ax = plt.subplots()
     ax.plot(xs, ys, marker = '.')
     ax.plot(xgnd, ygnd, marker = '.')

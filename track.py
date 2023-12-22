@@ -8,24 +8,29 @@ def _s(phi):
 
 s = np.vectorize(_s)
 
+class TrackSequence:
+    def __init__(self):
+        self.tracks=[]
+
+    def append_track(self, track):
+        self.tracks.append(track)
+
+    def total_arclength(self):
+        return sum([track.arclength for track in self.tracks])
+
+    def vertices_normals(self, arclengths):
+        arclength_thresholds = np.append(np.zeros(1),np.cumsum([track.arclength for track in self.tracks]))
+        arclength_conditions = np.array([(arclength_thresholds[i] <= arclengths) & (arclengths < arclength_thresholds[i+1]) \
+                                for i in range(len(arclength_thresholds) - 1)])
+        result = np.zeros((4,len(arclengths)))
+        for i in range(len(arclengths)):
+            track_idx = np.where(arclength_conditions[:,i])[0][0]
+            result[:,i] = self.tracks[track_idx]._vertices_normals(arclengths[i] - arclength_thresholds[track_idx])
+        return result
+
 class Track:
     def __init__(self, arclength, next_track=None):
         self.arclength, self.next_track = arclength, next_track
-
-    def vertices_normals(self, arclengths):
-        local_vertices_normals = self._vertices_normals(arclengths[arclengths <= self.arclength])
-        if self.next_track is None:
-            return local_vertices_normals
-        else:
-            return np.append(local_vertices_normals,
-                         self.next_track.vertices_normals(arclengths[arclengths > self.arclength] - self.arclength),
-                         axis = 1)
-
-    def total_arclength(self):
-        if self.next_track is None:
-            return self.arclength
-        else:
-            return self.arclength + self.next_track.total_arclength()
 
     def _vertices_normals(self, tline_xs):
         pass
@@ -37,7 +42,7 @@ class FermatSpiralTrack(Track):
         self.a = r_max / np.sqrt(self.phi_max)
         self.phi_start=phi_start
         self.neg_branch=neg_branch
-        self.phi_sampled = np.append(np.linspace(0, 1e-4, 100000), np.linspace(1e-4, 2*np.pi*n_turns, 100000))
+        self.phi_sampled = np.append(np.linspace(0, 1e-4, 1000000), np.linspace(1e-4, 2*np.pi*3, 1000000))
         try:
             with open('arclength.npy') as f:
                 pass
@@ -46,12 +51,12 @@ class FermatSpiralTrack(Track):
             np.save('arclength', self.arclength_sampled)
         self.arclength_sampled = np.load('arclength.npy') * self.a
         #plt.plot(self.phi_sampled[:100], self.arclength_sampled[:100]); plt.show()
-        Track.__init__(self, self.arclength_sampled[-1])
+        Track.__init__(self, np.interp(self.phi_max, self.phi_sampled, self.arclength_sampled))
 
     def _vertices_normals(self, tline_xs):
         if not self.neg_branch:
             tline_xs = self.arclength - tline_xs
-        self.phis = np.interp(tline_xs, self.arclength_sampled, self.phi_sampled, left=0, right=self.phi_max)
+        self.phis = np.interp(tline_xs, self.arclength_sampled, self.phi_sampled)
         self.rs = self.a * np.sqrt(self.phis)
         self.normal_angles = self.phis + self.phi_start - np.arctan(0.5 / self.phis)
         v = np.array((self.rs * np.cos(self.phis + self.phi_start),
@@ -59,7 +64,7 @@ class FermatSpiralTrack(Track):
                       np.cos(self.normal_angles),
                       np.sin(self.normal_angles)))
         if self.neg_branch:
-            v[0:2,:]*=-1
+            v[0:2]*=-1
         return v
 
     def _outer_point_normal(self):
@@ -76,7 +81,7 @@ class FermatSpiralTrack(Track):
 
         return outer_point, outer_normal, outer_normal_phi
 
-    def construct_suitable_ArcTrack(self):
+    def construct_suitable_ArcTrack(self, Rlaunch):
         outer_point, outer_normal, outer_normal_phi = self._outer_point_normal()
         arc_center_point = outer_point + outer_normal * Rlaunch
         #final_angle = self.phi_max - np.arctan(0.5/self.phi_max)
@@ -101,7 +106,7 @@ class ArcTrack(Track):
                          np.cos(self.phis),
                          np.sin(self.phis)))
         if not self.invert_phi:
-            v[2:4,:] *= -1
+            v[2:4] *= -1
         return v
 
 if __name__ == '__main__':
@@ -115,9 +120,8 @@ if __name__ == '__main__':
 
     fermat1 = FermatSpiralTrack(Rspiral, turns, 0, True)
     fermat2 = FermatSpiralTrack(Rspiral, turns, 0, False)
-    arc2 = fermat2.construct_suitable_ArcTrack()
-    arc1 = fermat1.construct_suitable_ArcTrack()
-    x,y = arc1.center
+    arc2 = fermat2.construct_suitable_ArcTrack(Rlaunch)
+    arc1 = fermat1.construct_suitable_ArcTrack(Rlaunch)
 
     track1 = arc2
     track2 = fermat2
@@ -127,13 +131,11 @@ if __name__ == '__main__':
     track1.next_track, track2.next_track, track3.next_track = track2, track3, track4
 
     initial_track = track1
-    arclengths = np.arange(0, initial_track.total_arclength(), 1e-5)
+    arclengths = np.arange(0, initial_track.total_arclength(), 1e-6)
     xs, ys, us, vs = initial_track.vertices_normals(arclengths)
     fig, axs = plt.subplots()
     axs.set_aspect('equal')
     axs.quiver(xs, ys, us, vs, scale_units='width', scale=100)
-
-    axs.scatter(x,y,c='g')
 
     xs,ys,_,_=track1.vertices_normals(np.array([0, track1.arclength, track1.arclength+track2.arclength, track1.arclength+track2.arclength+track3.arclength, track1.arclength+track2.arclength+track3.arclength+track4.arclength-1e-12]))
     axs.scatter(xs, ys, c='r', marker='.')

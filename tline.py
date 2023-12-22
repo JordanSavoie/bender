@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 import ezdxf
 
 class FishboneUnitCell:
-    def __init__(self, cell_length, fishbone_length, fishbone_height, line_width):
-        self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length = (
-            line_width, cell_length, fishbone_height, fishbone_length)
-    
+    def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gnd_spacing=2e-6):
+        self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length, self.gnd_spacing = \
+            line_width, cell_length, fishbone_height, fishbone_length, gnd_spacing
+
     def vertices(self):
         xvals1=[0,
                self.cell_length/2 - self.fishbone_length/2, self.cell_length/2 - self.fishbone_length/2,
@@ -35,130 +35,55 @@ class FishboneUnitCell:
         return np.array((xvals1, yvals1))
 
     def vertices_gnd(self):
-        xvals1=[0,
-               self.cell_length/2 - self.fishbone_length/2, self.cell_length/2 - self.fishbone_length/2,
-               self.cell_length/2 + self.fishbone_length/2, self.cell_length/2 + self.fishbone_length/2,
-               self.cell_length]
-        yvals1 = [self.line_width / 2,
-                 self.line_width/2, self.fishbone_height + self.line_width / 2,
-                 self.fishbone_height + self.line_width / 2, self.line_width / 2,
-                 self.line_width / 2 ]
-        xvals = [xvals1[-1], xvals1[0]]
-        yvals = [self.fishbone_height + 2e-6, self.fishbone_height + 2e-6]
-
-        return np.array((xvals, yvals))
-
-
-# class FishboneUnitCellNegative:
-#     def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gap_width):
-#         self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length, self.gap_width = (
-#             line_width, cell_length, fishbone_height, fishbone_length, gap_width)
-#
-#     def vertices(self):
-#         xvals = [0,
-#                  0,
-#                  0,
-#                  self.cell_length / 2 - self.fishbone_length / 2,
-#                  self.cell_length / 2 - self.fishbone_length / 2,
-#                  self.cell_length / 2 + self.fishbone_length / 2,
-#                  self.cell_length / 2 + self.fishbone_length / 2,
-#                  self.cell_length,
-#                  self.cell_length,
-#                  0,
-#                  self.cell_length,
-#                  self.cell_length
-#                  ]
-#         # yvals=[self.fishbone_length+self.line_width/2, self.fishbone_length+self.line_width/2, self.line_width/2, self.line_width/2]
-#         yvals = [self.line_width/2,
-#                  self.line_width / 2 + self.fishbone_height + self.gap_width,
-#                  self.line_width/2,
-#                  self.line_width/2,
-#                  self.line_width / 2 + self.fishbone_height,
-#                  self.line_width / 2 + self.fishbone_height,
-#                  self.line_width / 2,
-#                  self.line_width / 2,
-#                  self.line_width / 2 + self.fishbone_height + self.gap_width,
-#                  self.line_width / 2 + self.fishbone_height + self.gap_width,
-#                  self.line_width / 2 + self.fishbone_height + self.gap_width,
-#                  self.line_width / 2
-#                 ]
-#
-#         return np.array((xvals, yvals))
-
-
-
-
+        gnd_height = self.line_width/2+self.fishbone_height+self.gnd_spacing
+        return np.array(((self.cell_length, 0), (gnd_height, gnd_height)))
 
 class FloquetUnitCell:
     def __init__(self):
         self.fishbones=[]
+    
     def append_fishbones(self, fishbone_cell, n_fishbones=1):
         for n in range(n_fishbones):
             self.fishbones = np.append(self.fishbones, fishbone_cell)
             
     def vertices(self):
-        v=self.fishbones[0].vertices()
-        xstart=self.fishbones[0].cell_length
-        for fishbone in self.fishbones[1:]:
+        v=np.array([[],[]])
+        xstart=0
+        for fishbone in self.fishbones:
             fishbone_vertices=fishbone.vertices()
-            #print(fishbone_vertices)
             fishbone_vertices[0,:]+=xstart
-            v=np.append(v, fishbone_vertices, axis = 1)
+            v=np.append(v, fishbone_vertices, axis=1)
             xstart += fishbone.cell_length
 
+        for fishbone in reversed(self.fishbones):
+            xstart -= fishbone.cell_length
+            gnd_vertices = fishbone.vertices_gnd()
+            gnd_vertices[0,:]+=xstart
+            v=np.append(v, gnd_vertices, axis=1)
+
         return v
 
-    def vertices_gnd(self):
-        v=self.fishbones[-1].vertices_gnd()
-        xstart=(len(self.fishbones)-1)*self.fishbones[0].cell_length
-        v[0,:] += xstart
-        for fishbone in reversed(self.fishbones[0:-1]):
-            fishbone_vertices=fishbone.vertices_gnd()
-            #print(fishbone_vertices)
-            # fishbone_vertices[0,:]-=xstart
-            v=np.append(v, fishbone_vertices, axis = 1)
-            # xstart += fishbone.cell_length
-            print(xstart)
-        return v
-
+    def cell_length(self):
+        return sum([fishbone.cell_length for fishbone in self.fishbones])
 
 if __name__=='__main__':
     fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
     #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
     floquet = FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 1)
-    # floquet.append_fishbones(fishboneB, 1)
-    # floquet.append_fishbones(fishboneA, 3)
+    floquet.append_fishbones(fishboneA, 2)
+    floquet.append_fishbones(fishboneB, 1)
     xs, ys = floquet.vertices()
-    xgnd, ygnd = floquet.vertices_gnd()
 
-    # #add ground boundary
-    # numbones = 2
-    # bone_vertices = 6
-    # bones = [fishboneA, fishboneB]
-    # # xs = np.append(xs, xs[-1])
-    # # ys = np.append(ys, bones[-1].fishbone_height + 2e-6)
-    # #
-    # # for i in range(numbones):
-    # #     xs = np.append(xs, [xs[-1-(i+1)*bone_vertices], xs[-1-(i+1)*bone_vertices]])#, xs[i*numbones*bone_vertices]])
-    # #     ys = np.append(ys, [bones[-1].fishbone_height + 2e-6, bones[-2].fishbone_height + 2e-6])#, bones[-1-i].fishbone_height + 2e-6, ys[0]])
-
-
-    # print(xs)
     mir_ys = -ys
-    mir_ygnd = -ygnd
 
     fig,ax=plt.subplots()
-    ax.scatter(xs,ys,c = np.arange(len(xs)),marker='.', cmap = 'coolwarm')
-    ax.scatter(xgnd, ygnd, c = np.arange(len(xgnd)), marker='.', cmap = 'coolwarm')
-    ax.set_ylim(0,None)
-    plt.show()
-    fig,ax = plt.subplots()
-    ax.plot(xs, ys, marker = '.')
-    ax.plot(xgnd, ygnd, marker = '.')
+    ax.scatter(xs,ys)
+    ax.scatter(xs, mir_ys)
+    for i in range(len(xs)):
+        ax.annotate(str(i), (xs[i],ys[i]))
     plt.show()
 
-    merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
+    '''merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
     merged_list_gnd = [(xgnd[i], ygnd[i]) for i in range(0, len(xgnd))]
     merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
     merged_list_mir_gnd = [(xgnd[i], mir_ygnd[i]) for i in range(0, len(xgnd))]
@@ -175,4 +100,4 @@ if __name__=='__main__':
     doc.saveas("unitcell.dxf")
 
     # print(merged_list)
-
+    '''

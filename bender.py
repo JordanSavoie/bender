@@ -2,6 +2,7 @@ import track, tline
 import numpy as np, matplotlib.pyplot as plt
 import ezdxf
 from ezdxf import units
+import math
 
 
 class Bender:  # uh oh

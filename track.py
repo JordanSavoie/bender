@@ -108,37 +108,3 @@ class ArcTrack(Track):
         if not self.invert_phi:
             v[2:4] *= -1
         return v
-
-if __name__ == '__main__':
-    Rspiral = 20e-3
-    launch_angle = 0
-    turns = 1.9
-    final_angle = 2 * np.pi * turns
-    #final_point = R
-    #final_normal_angle = final_angle % (2*np.pi) - np.arctan(0.5/final_angle)
-    Rlaunch = 30e-3
-
-    fermat1 = FermatSpiralTrack(Rspiral, turns, 0, True)
-    fermat2 = FermatSpiralTrack(Rspiral, turns, 0, False)
-    arc2 = fermat2.construct_suitable_ArcTrack(Rlaunch)
-    arc1 = fermat1.construct_suitable_ArcTrack(Rlaunch)
-
-    track1 = arc2
-    track2 = fermat2
-    track3 = fermat1
-    track4 = arc1
-
-    track1.next_track, track2.next_track, track3.next_track = track2, track3, track4
-
-    initial_track = track1
-    arclengths = np.arange(0, initial_track.total_arclength(), 1e-6)
-    xs, ys, us, vs = initial_track.vertices_normals(arclengths)
-    fig, axs = plt.subplots()
-    axs.set_aspect('equal')
-    axs.quiver(xs, ys, us, vs, scale_units='width', scale=100)
-
-    xs,ys,_,_=track1.vertices_normals(np.array([0, track1.arclength, track1.arclength+track2.arclength, track1.arclength+track2.arclength+track3.arclength, track1.arclength+track2.arclength+track3.arclength+track4.arclength-1e-12]))
-    axs.scatter(xs, ys, c='r', marker='.')
-    A=40e-3
-    axs.set_xlim(-A, A), axs.set_ylim(-A,A)
-    plt.show()

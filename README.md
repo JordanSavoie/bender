@@ -6,6 +6,6 @@ To install Python libraries needed, run
 in your Python virtual environment.
 
 Files
--bender.py: Main program lives here
--tline.py: helper class for generating tline polygons
--track.py: helper class for generating track curves
+- bender.py: Main program lives here
+- tline.py: helper class for generating tline polygons
+- track.py: helper class for generating track curves

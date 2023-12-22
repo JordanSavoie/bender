@@ -81,14 +81,14 @@ class FermatSpiralTrack(Track):
 
         return outer_point, outer_normal, outer_normal_phi
 
-    def construct_suitable_ArcTrack(self, Rlaunch):
+    def construct_suitable_ArcTrack(self):
         outer_point, outer_normal, outer_normal_phi = self._outer_point_normal()
-        arc_center_point = outer_point + outer_normal * Rlaunch
-        #final_angle = self.phi_max - np.arctan(0.5/self.phi_max)
+        radius = np.abs(outer_point[1]) / (1-np.abs(np.sin(outer_normal_phi)))
+        arc_center_point = outer_point + outer_normal * radius
         if not self.neg_branch:
-            return ArcTrack(arc_center_point, Rlaunch, np.pi / 2, outer_normal_phi % np.pi, False)
+            return ArcTrack(arc_center_point, radius, np.pi / 2, outer_normal_phi % np.pi, False)
         else:
-            return ArcTrack(arc_center_point, Rlaunch, -outer_normal_phi % np.pi, np.pi / 2, True)
+            return ArcTrack(arc_center_point, radius, -outer_normal_phi % np.pi, np.pi / 2, True)
 
 class ArcTrack(Track):
     def __init__(self, center, r, phi_start, phi_end, invert_phi):

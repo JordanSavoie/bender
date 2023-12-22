@@ -23,12 +23,18 @@ class Bender:  # uh oh
 
         self.tline_vertices = tline_vertices
         
-    def bend_tline(self):
+    def bend_tline(self, plot=False):
         arclengths, heights = self.tline_vertices
         xs, ys, us, vs = self.track_sequence.vertices_normals(arclengths)
 
         self.bent_xs = xs + us * heights
         self.bent_ys = ys + vs * heights
+
+        if plot:
+            fig,ax=plt.subplots()
+            ax.set_aspect('equal')
+            ax.plot(self.bent_xs, self.bent_ys, marker='.', color='black')
+            plt.show()
 
     def mirror_tline(self):
         self.tline_vertices[1,:] *= -1
@@ -58,12 +64,11 @@ if __name__ == '__main__':
     launch_angle = 0
     turns = 1.95
     final_angle = turns * 2 * np.pi
-    Rlaunch = 10e-3
 
     fermat1 = track.FermatSpiralTrack(Rspiral, turns, 0, True)
     fermat2 = track.FermatSpiralTrack(Rspiral, turns, 0, False)
-    arc2 = fermat2.construct_suitable_ArcTrack(Rlaunch)
-    arc1 = fermat1.construct_suitable_ArcTrack(Rlaunch)
+    arc2 = fermat2.construct_suitable_ArcTrack()
+    arc1 = fermat1.construct_suitable_ArcTrack()
 
     trackseq = track.TrackSequence()
     trackseq.append_track(arc2)
@@ -73,7 +78,7 @@ if __name__ == '__main__':
 
     bender = Bender(trackseq, floquet)
     bender.construct_tline()
-    bender.bend_tline()
+    bender.bend_tline(plot=True)
     bender.write_bent_tline('output.dxf')
 
     bender.mirror_tline()

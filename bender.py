@@ -8,6 +8,7 @@ import math
 class Bender:  # uh oh
     def __init__(self, track_sequence, floquet_unit_cell):
         self.track_sequence, self.floquet_unit_cell = track_sequence, floquet_unit_cell
+        self.create_dxf()
         
     def construct_tline(self):
         self.unit_cell_vertices_count = self.floquet_unit_cell.vertices().shape[1]
@@ -39,19 +40,21 @@ class Bender:  # uh oh
     def mirror_tline(self):
         self.tline_vertices[1,:] *= -1
 
-    def write_bent_tline(self, filename):
-        doc = ezdxf.new()
-        msp = doc.modelspace()
-        doc.units = units.M
+    def create_dxf(self):
+        self.doc = ezdxf.new()
+        self.msp = self.doc.modelspace()
+        self.doc.units = units.M
 
+    def write_bent_tline(self):
         for n in range(self.n_floquet_cells):
             first=self.unit_cell_vertices_count*n
             last=first+self.unit_cell_vertices_count
             polygon = [(self.bent_xs[i], self.bent_ys[i]) for i in range(first,last)]
-            msp.add_lwpolyline(polygon, close=True)
+            self.msp.add_lwpolyline(polygon, close=True)
 
+    def write_dxf(self,filename):
         # Save the DXF file
-        doc.saveas(filename)
+        self.doc.saveas(filename)
 
 if __name__ == '__main__':
     fishboneA, fishboneB = tline.FishboneUnitCell(40e-6, 2e-6, 25e-6, 2e-6, 2e-6), \
@@ -79,8 +82,10 @@ if __name__ == '__main__':
     bender = Bender(trackseq, floquet)
     bender.construct_tline()
     bender.bend_tline(plot=True)
-    bender.write_bent_tline('output.dxf')
+    bender.write_bent_tline()
 
     bender.mirror_tline()
     bender.bend_tline()
-    bender.write_bent_tline('output_mir.dxf')
+    bender.write_bent_tline()
+
+    bender.write_dxf('output.dxf')

@@ -66,6 +66,9 @@ class FloquetUnitCell:
     def cell_length(self):
         return sum([fishbone.cell_length for fishbone in self.fishbones])
 
+    def cell_min_spacing(self):
+        return max(np.concatenate([fishbone.vertices()[1,:] for fishbone in self.fishbones]))
+
 if __name__=='__main__':
     fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
     #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)

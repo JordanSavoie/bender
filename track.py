@@ -36,11 +36,9 @@ class Track:
         pass
 
 class FermatSpiralTrack(Track):
-    #number of turns, phi_start should not be needed
-    def __init__(self, r_max, n_turns, phi_start, neg_branch, next_track=None):
+    def __init__(self, n_turns, min_spacing, neg_branch, next_track=None):
         self.phi_max = n_turns * 2 * np.pi
-        self.a = r_max / np.sqrt(self.phi_max)
-        self.phi_start=phi_start
+        self.a = min_spacing / (np.sqrt(self.phi_max) - np.sqrt(self.phi_max-np.pi))
         self.neg_branch=neg_branch
         self.phi_sampled = np.append(np.linspace(0, 1e-4, 1000000), np.linspace(1e-4, 2*np.pi*3, 1000000))
         try:
@@ -53,14 +51,16 @@ class FermatSpiralTrack(Track):
         #plt.plot(self.phi_sampled[:100], self.arclength_sampled[:100]); plt.show()
         Track.__init__(self, np.interp(self.phi_max, self.phi_sampled, self.arclength_sampled))
 
+
+
     def _vertices_normals(self, tline_xs):
         if not self.neg_branch:
             tline_xs = self.arclength - tline_xs
         self.phis = np.interp(tline_xs, self.arclength_sampled, self.phi_sampled)
         self.rs = self.a * np.sqrt(self.phis)
-        self.normal_angles = self.phis + self.phi_start - np.arctan(0.5 / self.phis)
-        v = np.array((self.rs * np.cos(self.phis + self.phi_start),
-                    self.rs * np.sin(self.phis + self.phi_start),
+        self.normal_angles = self.phis - np.arctan(0.5 / self.phis)
+        v = np.array((self.rs * np.cos(self.phis),
+                    self.rs * np.sin(self.phis),
                       np.cos(self.normal_angles),
                       np.sin(self.normal_angles)))
         if self.neg_branch:
@@ -108,3 +108,26 @@ class ArcTrack(Track):
         if not self.invert_phi:
             v[2:4] *= -1
         return v
+
+    def construct_suitable_StraightTrack(self, tline_compact_length):
+        if self.invert_phi:
+            arc_start = self.center - self.r * np.array((np.cos(self.phi_end), np.sin(self.phi_end)))
+            straight_length = tline_compact_length/2 + arc_start[0]
+            return StraightTrack(arc_start, arc_start - straight_length * np.array((1,0)))
+        else:
+            arc_start = self.center + self.r * np.array((np.cos(self.phi_start), np.sin(self.phi_start)))
+            straight_length = tline_compact_length/2 - arc_start[0]
+            return StraightTrack(arc_start + straight_length * np.array((1,0)), arc_start)
+
+class StraightTrack(Track):
+    def __init__(self, start, end):
+        self.start, self.end = start, end
+        self.length = np.linalg.norm(self.end-self.start)
+        self.direction = (self.end-self.start) / self.length
+        self.normal = np.array((-self.direction[1], self.direction[0]))
+        Track.__init__(self, self.length)
+
+    def _vertices_normals(self, tline_xs):
+        x, y = self.start + tline_xs * self.direction
+        u, v = self.normal #np.repeat(self.normal[0], tline_xs)), np.repeat(self.normal[1], len(tline_xs))
+        return x,y,u,v

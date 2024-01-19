@@ -14,13 +14,13 @@ class Bender:  # uh oh
         self.unit_cell_vertices_count = self.floquet_unit_cell.vertices().shape[1]
         unit_cell_length = self.floquet_unit_cell.cell_length()
         arclength = trackseq.total_arclength()
-        self.n_floquet_cells = int(arclength // unit_cell_length)-2
+        self.n_floquet_cells = int(arclength // unit_cell_length)-1
         
         tline_vertices = np.array([[], []])
         offset = np.array([[0.0], [0.0]])
         for i in range(self.n_floquet_cells):
-            offset += np.array([[unit_cell_length], [0.0]])
             tline_vertices = np.append(tline_vertices, floquet.vertices() + offset, axis=1)
+            offset += np.array([[unit_cell_length], [0.0]])
 
         self.tline_vertices = tline_vertices
         
@@ -63,21 +63,26 @@ if __name__ == '__main__':
     floquet.append_fishbones(fishboneA, 1)
     floquet.append_fishbones(fishboneB, 2)
 
-    Rspiral = 10e-3
-    launch_angle = 0
+    min_spacing = 4 * floquet.cell_min_spacing()
     turns = 1.95
     final_angle = turns * 2 * np.pi
 
-    fermat1 = track.FermatSpiralTrack(Rspiral, turns, 0, True)
-    fermat2 = track.FermatSpiralTrack(Rspiral, turns, 0, False)
+    tline_compact_length = 10e-3
+
+    fermat1 = track.FermatSpiralTrack(turns, min_spacing, True)
+    fermat2 = track.FermatSpiralTrack(turns, min_spacing, False)
     arc2 = fermat2.construct_suitable_ArcTrack()
     arc1 = fermat1.construct_suitable_ArcTrack()
+    straight2 = arc2.construct_suitable_StraightTrack(tline_compact_length)
+    straight1 = arc1.construct_suitable_StraightTrack(tline_compact_length)
 
     trackseq = track.TrackSequence()
+    trackseq.append_track(straight2)
     trackseq.append_track(arc2)
     trackseq.append_track(fermat2)
     trackseq.append_track(fermat1)
     trackseq.append_track(arc1)
+    trackseq.append_track(straight1)
 
     bender = Bender(trackseq, floquet)
     bender.construct_tline()
@@ -85,7 +90,7 @@ if __name__ == '__main__':
     bender.write_bent_tline()
 
     bender.mirror_tline()
-    bender.bend_tline()
+    bender.bend_tline(plot=True)
     bender.write_bent_tline()
 
     bender.write_dxf('output.dxf')

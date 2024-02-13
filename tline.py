@@ -70,37 +70,38 @@ class FloquetUnitCell:
         return max(np.concatenate([fishbone.vertices()[1,:] for fishbone in self.fishbones]))
 
 if __name__=='__main__':
-    fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
-    #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
-    floquet = FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 2)
-    floquet.append_fishbones(fishboneB, 1)
-    xs, ys = floquet.vertices()
+    pass
+    # fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
+    # #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
+    # floquet = FloquetUnitCell()
+    # floquet.append_fishbones(fishboneA, 2)
+    # floquet.append_fishbones(fishboneB, 1)
+    # xs, ys = floquet.vertices()
 
-    mir_ys = -ys
+    # mir_ys = -ys
+    #
+    # fig,ax=plt.subplots()
+    # ax.scatter(xs,ys)
+    # ax.scatter(xs, mir_ys)
+    # for i in range(len(xs)):
+    #     ax.annotate(str(i), (xs[i],ys[i]))
+    # plt.show()
 
-    fig,ax=plt.subplots()
-    ax.scatter(xs,ys)
-    ax.scatter(xs, mir_ys)
-    for i in range(len(xs)):
-        ax.annotate(str(i), (xs[i],ys[i]))
-    plt.show()
-
-    '''merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
-    merged_list_gnd = [(xgnd[i], ygnd[i]) for i in range(0, len(xgnd))]
-    merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
-    merged_list_mir_gnd = [(xgnd[i], mir_ygnd[i]) for i in range(0, len(xgnd))]
-    print(merged_list_gnd)
+    # merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
+    # merged_list_gnd = [(xgnd[i], ygnd[i]) for i in range(0, len(xgnd))]
+    # merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
+    # merged_list_mir_gnd = [(xgnd[i], mir_ygnd[i]) for i in range(0, len(xgnd))]
+    # print(merged_list_gnd)
 
 
-    doc = ezdxf.new()
-    msp = doc.modelspace()
-    #polyline = msp.add_lwpolyline(merged_list + merge_list_mir[::-1], close=True)
-    polyline = msp.add_polyline2d(merged_list + merged_list_gnd, close=True)
-    polyline_mir = msp.add_polyline2d(merge_list_mir + merged_list_mir_gnd, close = True)
-
-    # Save the DXF file
-    doc.saveas("unitcell.dxf")
+    # doc = ezdxf.new()
+    # msp = doc.modelspace()
+    # #polyline = msp.add_lwpolyline(merged_list + merge_list_mir[::-1], close=True)
+    # polyline = msp.add_polyline2d(merged_list + merged_list_gnd, close=True)
+    # polyline_mir = msp.add_polyline2d(merge_list_mir + merged_list_mir_gnd, close = True)
+    #
+    # # Save the DXF file
+    # doc.saveas("unitcell.dxf")
 
     # print(merged_list)
-    '''
+

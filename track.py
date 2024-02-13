@@ -24,7 +24,10 @@ class TrackSequence:
                                 for i in range(len(arclength_thresholds) - 1)])
         result = np.zeros((4,len(arclengths)))
         for i in range(len(arclengths)):
-            track_idx = np.where(arclength_conditions[:,i])[0][0]
+            if(np.where(arclength_conditions[:,i])[0].size != 0):
+                track_idx = np.where(arclength_conditions[:,i])[0][0]
+            else:
+                track_idx = np.where(arclength_conditions[:,(i-1)])[0][0]
             result[:,i] = self.tracks[track_idx]._vertices_normals(arclengths[i] - arclength_thresholds[track_idx])
         return result
 

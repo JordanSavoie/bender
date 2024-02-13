@@ -57,17 +57,23 @@ class Bender:  # uh oh
         self.doc.saveas(filename)
 
 if __name__ == '__main__':
-    fishboneA, fishboneB = tline.FishboneUnitCell(40e-6, 2e-6, 25e-6, 2e-6, 2e-6), \
-                            tline.FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
+    fishboneA, fishboneB = tline.FishboneUnitCell(7e-6, 1e-6, 70e-6, 1e-6, 2e-6), \
+                            tline.FishboneUnitCell(7e-6, 1e-6, 100e-6, 1e-6, 2e-6)
     floquet = tline.FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 1)
-    floquet.append_fishbones(fishboneB, 2)
+    floquet.append_fishbones(fishboneA, 14)
+    floquet.append_fishbones(fishboneB, 14)
+    floquet.append_fishbones(fishboneA, 29)
+    floquet.append_fishbones(fishboneB, 14)
+    floquet.append_fishbones(fishboneA, 27)
+    floquet.append_fishbones(fishboneB, 17)
+    floquet.append_fishbones(fishboneA, 13)
+
 
     min_spacing = 4 * floquet.cell_min_spacing()
-    turns = 1.95
+    turns = 2.9
     final_angle = turns * 2 * np.pi
 
-    tline_compact_length = 10e-3
+    tline_compact_length = 25e-3
 
     fermat1 = track.FermatSpiralTrack(turns, min_spacing, True)
     fermat2 = track.FermatSpiralTrack(turns, min_spacing, False)
@@ -86,11 +92,14 @@ if __name__ == '__main__':
 
     bender = Bender(trackseq, floquet)
     bender.construct_tline()
-    bender.bend_tline(plot=True)
+    bender.bend_tline(plot=False)
     bender.write_bent_tline()
 
     bender.mirror_tline()
     bender.bend_tline(plot=True)
     bender.write_bent_tline()
+
+    print(floquet.cell_length())
+    print(trackseq.total_arclength())
 
     bender.write_dxf('output.dxf')

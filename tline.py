@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import ezdxf
 
 class FishboneUnitCell:
-    def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gnd_spacing=2e-6):
-        self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length, self.gnd_spacing = \
-            line_width, cell_length, fishbone_height, fishbone_length, gnd_spacing
+    def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gnd_spacing=2e-6, interdigitate=True):
+        self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length, self.gnd_spacing, self.interdigitate = \
+            line_width, cell_length, fishbone_height, fishbone_length, gnd_spacing, interdigitate
 
     def vertices(self):
         xvals1=[0,
@@ -36,7 +36,19 @@ class FishboneUnitCell:
 
     def vertices_gnd(self):
         gnd_height = self.line_width/2+self.fishbone_height+self.gnd_spacing
-        return np.array(((self.cell_length, 0), (gnd_height, gnd_height)))
+        if self.interdigitate:
+            return np.array(((self.cell_length,
+                              self.cell_length/2 + self.fishbone_length/2 + self.gnd_spacing, self.cell_length/2 + self.fishbone_length/2 + self.gnd_spacing,
+                              self.cell_length/2 - self.fishbone_length/2 - self.gnd_spacing, self.cell_length/2 - self.fishbone_length/2 - self.gnd_spacing,
+                              0),
+                             (self.line_width/2+self.gnd_spacing, 
+                              self.line_width/2+self.gnd_spacing, gnd_height,
+                              gnd_height, self.line_width/2+self.gnd_spacing, 
+                              self.line_width/2+self.gnd_spacing)))
+        else:
+            return np.array(((self.cell_length, 0),
+                             (gnd_height, gnd_height)))
+
 
 class FloquetUnitCell:
     def __init__(self):

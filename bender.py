@@ -57,8 +57,8 @@ class Bender:  # uh oh
         self.doc.saveas(filename)
 
 if __name__ == '__main__':
-    fishboneA, fishboneB = tline.FishboneUnitCell(7e-6, 1e-6, 70e-6, 1e-6, 2e-6), \
-                            tline.FishboneUnitCell(7e-6, 1e-6, 100e-6, 1e-6, 2e-6)
+    fishboneA, fishboneB = tline.FishboneUnitCell(7e-6, 1e-6, 70e-6, 1e-6, gnd_spacing=2e-6, interdigitate=True), \
+                            tline.FishboneUnitCell(7e-6, 1e-6, 100e-6, 1e-6, gnd_spacing=2e-6, interdigitate=True)
     floquet = tline.FloquetUnitCell()
     floquet.append_fishbones(fishboneA, 14)
     floquet.append_fishbones(fishboneB, 14)

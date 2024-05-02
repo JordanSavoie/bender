@@ -15,7 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ezdxf
 import ezdxf.path
-from ezdxf.math import Vec3
 
 class FishboneUnitCell:
     def __init__(self, cell_length, w_center_line, w_fishbone_line, w_line, gnd_spacing, interdigitate):
@@ -37,8 +36,10 @@ class FishboneUnitCell:
         gnd_height = self.w_line/2 + self.gnd_spacing
         if self.interdigitate:
             return np.array(((self.cell_length,
-                              self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing, self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing,
-                              self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing, self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing,
+                              self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing,
+                                self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing,
+                              self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing, 
+                            self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing,
                               0),
                             (self.w_center_line/2+self.gnd_spacing, 
                               self.w_center_line/2+self.gnd_spacing, gnd_height,

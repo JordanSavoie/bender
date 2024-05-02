@@ -22,7 +22,7 @@
 		"w_fishbone_line": 2e-6,
 		"w_center_line": 8e-6,
 		"gnd_spacing": 2e-6,
-		"gnd_interdigitate": true,
+		"gnd_interdigitate": false,
 		"fillet_radius": null 
 	},
 	"track": {

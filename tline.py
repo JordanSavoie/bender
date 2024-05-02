@@ -14,6 +14,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import ezdxf
+import ezdxf.path
+from ezdxf.math import Vec3
 
 class FishboneUnitCell:
     def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gnd_spacing=2e-6, interdigitate=True):
@@ -83,37 +85,46 @@ class FloquetUnitCell:
 
 if __name__=='__main__':
     pass
-    # fishboneA, fishboneB = FishboneUnitCell(4e-6, 2e-6, 25e-6, 2e-6), FishboneUnitCell(4e-6, 2e-6, 100e-6, 2e-6)
-    # #fishboneA, fishboneB = FishboneUnitCellNegative(4e-6,2e-6, 25e-6, 2e-6, 2e-6), FishboneUnitCellNegative(4e-6, 2e-6, 100e-6, 2e-6, 2e-6)
-    # floquet = FloquetUnitCell()
-    # floquet.append_fishbones(fishboneA, 2)
-    # floquet.append_fishbones(fishboneB, 1)
-    # xs, ys = floquet.vertices()
+    import track
+    fishboneA= FishboneUnitCell(8e-6, 2e-6, 42e-6, 2e-6, gnd_spacing=2e-6, interdigitate=True)
+    acpw = FloquetUnitCell()
+    acpw.append_fishbones(fishboneA, 14)
+    xs, ys = acpw.vertices()
 
-    # mir_ys = -ys
-    #
-    # fig,ax=plt.subplots()
-    # ax.scatter(xs,ys)
-    # ax.scatter(xs, mir_ys)
+    mir_ys = -ys
+    straight1 = track.StraightTrack(np.array([0, 0]), np.array([1e-6, 0]))
+
+
+    fig,ax=plt.subplots()
+    ax.plot(xs,ys)
+    ax.plot(xs, mir_ys)
     # for i in range(len(xs)):
     #     ax.annotate(str(i), (xs[i],ys[i]))
-    # plt.show()
+    plt.show()
 
-    # merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
+
+    merged_list = [(xs[i], ys[i]) for i in range(0, len(xs))]
     # merged_list_gnd = [(xgnd[i], ygnd[i]) for i in range(0, len(xgnd))]
-    # merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
+    merge_list_mir = [(xs[i], mir_ys[i]) for i in range(0, len(xs))]
     # merged_list_mir_gnd = [(xgnd[i], mir_ygnd[i]) for i in range(0, len(xgnd))]
-    # print(merged_list_gnd)
 
 
-    # doc = ezdxf.new()
-    # msp = doc.modelspace()
-    # #polyline = msp.add_lwpolyline(merged_list + merge_list_mir[::-1], close=True)
-    # polyline = msp.add_polyline2d(merged_list + merged_list_gnd, close=True)
-    # polyline_mir = msp.add_polyline2d(merge_list_mir + merged_list_mir_gnd, close = True)
-    #
-    # # Save the DXF file
-    # doc.saveas("unitcell.dxf")
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+
+    p = ezdxf.path.from_vertices(merged_list)
+    p.close()
+    pp = ezdxf.path.fillet(p.control_vertices(), radius=0.75e-6)
+
+    out = ezdxf.path.to_lwpolylines({pp})
+    for n in out:
+        msp.add_lwpolyline(n, close=True)
+
+    # out = ezdxf.path.render_lwpolylines(layout=msp, paths={pp})
+
+
+    # Save the DXF file
+    doc.saveas("unitcell.dxf")
 
     # print(merged_list)
 

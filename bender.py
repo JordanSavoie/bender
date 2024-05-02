@@ -57,20 +57,48 @@ class Bender:  # uh oh
         self.doc.saveas(filename)
 
 if __name__ == '__main__':
-    fishboneA, fishboneB = tline.FishboneUnitCell(7e-6, 1e-6, 70e-6, 1e-6, gnd_spacing=2e-6, interdigitate=True), \
-                            tline.FishboneUnitCell(7e-6, 1e-6, 100e-6, 1e-6, gnd_spacing=2e-6, interdigitate=True)
+    filename = 'straight_gnd_10GHz.dxf'
+    wcenter = 8e-6
+    wline = 40e-6 - wcenter
+    wload = 80e-6 - wcenter
+    fishboneA, fishboneB = tline.FishboneUnitCell(4e-6, 2e-6, wline/2, wcenter, gnd_spacing=2e-6, interdigitate=False), \
+                            tline.FishboneUnitCell(4e-6, 2e-6, wload/2, wcenter, gnd_spacing=2e-6, interdigitate=False)
+    # wcenter = 8e-6
+    # wline = 40e-6 - wcenter
+    # fishboneA = tline.FishboneUnitCell(4e-6, 2e-6, wline/2, wcenter, gnd_spacing=2e-6, interdigitate=False)
     floquet = tline.FloquetUnitCell()
-    floquet.append_fishbones(fishboneA, 14)
-    floquet.append_fishbones(fishboneB, 14)
-    floquet.append_fishbones(fishboneA, 29)
-    floquet.append_fishbones(fishboneB, 14)
-    floquet.append_fishbones(fishboneA, 27)
-    floquet.append_fishbones(fishboneB, 17)
-    floquet.append_fishbones(fishboneA, 13)
+    floquet.append_fishbones(fishboneA, 71)
+    floquet.append_fishbones(fishboneB, 25)
+    floquet.append_fishbones(fishboneA, 142)
+    floquet.append_fishbones(fishboneB, 25)
+    floquet.append_fishbones(fishboneA, 139)
+    floquet.append_fishbones(fishboneB, 30)
+    floquet.append_fishbones(fishboneA, 68)
 
 
-    min_spacing = 4 * floquet.cell_min_spacing()
-    turns = 2.9
+
+
+    #Alec 10GHz
+    # floquet.append_fishbones(fishboneA, 19)
+    # floquet.append_fishbones(fishboneB, 8)
+    # floquet.append_fishbones(fishboneA, 38)
+    # floquet.append_fishbones(fishboneB, 8)
+    # floquet.append_fishbones(fishboneA, 37)
+    # floquet.append_fishbones(fishboneB, 10)
+    # floquet.append_fishbones(fishboneA, 18)
+
+    #Jordan 5GHz
+    # floquet.append_fishbones(fishboneA, 39)
+    # floquet.append_fishbones(fishboneB, 13)
+    # floquet.append_fishbones(fishboneA, 79)
+    # floquet.append_fishbones(fishboneB, 13)
+    # floquet.append_fishbones(fishboneA, 78)
+    # floquet.append_fishbones(fishboneB, 14)
+    # floquet.append_fishbones(fishboneA, 39)
+
+
+    min_spacing = 5.5*floquet.cell_min_spacing()
+    turns = 5.94
     final_angle = turns * 2 * np.pi
 
     tline_compact_length = 25e-3
@@ -96,10 +124,12 @@ if __name__ == '__main__':
     bender.write_bent_tline()
 
     bender.mirror_tline()
-    bender.bend_tline(plot=True)
+    bender.bend_tline(plot=False)
     bender.write_bent_tline()
 
     print(floquet.cell_length())
     print(trackseq.total_arclength())
+    print(bender.n_floquet_cells)
 
-    bender.write_dxf('output.dxf')
+    bender.write_dxf(filename)
+

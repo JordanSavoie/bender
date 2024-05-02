@@ -43,7 +43,7 @@ class FermatSpiralTrack(Track):
         self.phi_max = n_turns * 2 * np.pi
         self.a = min_spacing / (np.sqrt(self.phi_max) - np.sqrt(self.phi_max-np.pi))
         self.neg_branch=neg_branch
-        self.phi_sampled = np.append(np.linspace(0, 1e-4, 1000000), np.linspace(1e-4, 2*np.pi*3, 1000000))
+        self.phi_sampled = np.append(np.linspace(0, 1e-4, 1000000), np.linspace(1e-4, 2*np.pi*n_turns, 1000000))
         try:
             with open('arclength.npy') as f:
                 pass
@@ -134,3 +134,4 @@ class StraightTrack(Track):
         x, y = self.start + tline_xs * self.direction
         u, v = self.normal #np.repeat(self.normal[0], tline_xs)), np.repeat(self.normal[1], len(tline_xs))
         return x,y,u,v
+

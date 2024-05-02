@@ -18,35 +18,32 @@ import ezdxf.path
 from ezdxf.math import Vec3
 
 class FishboneUnitCell:
-    def __init__(self, cell_length, fishbone_length, fishbone_height, line_width, gnd_spacing=2e-6, interdigitate=True):
-        self.line_width, self.cell_length, self.fishbone_height, self.fishbone_length, self.gnd_spacing, self.interdigitate = \
-            line_width, cell_length, fishbone_height, fishbone_length, gnd_spacing, interdigitate
+    def __init__(self, cell_length, w_center_line, w_fishbone_line, w_line, gnd_spacing, interdigitate):
+        self.cell_length, self.w_center_line, self.w_fishbone_line, self.w_line, self.gnd_spacing, self.interdigitate = cell_length, w_center_line, w_fishbone_line, w_line, gnd_spacing, interdigitate
 
     def vertices(self):
-        xvals1=[0,
-               self.cell_length/2 - self.fishbone_length/2, self.cell_length/2 - self.fishbone_length/2,
-               self.cell_length/2 + self.fishbone_length/2, self.cell_length/2 + self.fishbone_length/2,
-               self.cell_length]
+        xvals1=[0, self.cell_length/2 - self.w_fishbone_line/2,
+                self.cell_length/2 - self.w_fishbone_line/2, self.cell_length/2 + self.w_fishbone_line/2,
+                self.cell_length/2 + self.w_fishbone_line/2, self.cell_length]
         #yvals=[self.fishbone_length+self.line_width/2, self.fishbone_length+self.line_width/2, self.line_width/2, self.line_width/2]
-        yvals1 = [self.line_width / 2,
-                 self.line_width/2, self.fishbone_height + self.line_width / 2,
-                 self.fishbone_height + self.line_width / 2, self.line_width / 2,
-                 self.line_width / 2 ]
+        yvals1 = [self.w_center_line / 2, self.w_center_line/2,
+                  self.w_line/2, self.w_line/2,
+                  self.w_center_line/2, self.w_center_line/2]
         #changed this to make fishbone unit symmetric
 
         return np.array((xvals1, yvals1))
 
     def vertices_gnd(self):
-        gnd_height = self.line_width/2+self.fishbone_height+self.gnd_spacing
+        gnd_height = self.w_line/2 + self.gnd_spacing
         if self.interdigitate:
             return np.array(((self.cell_length,
-                              self.cell_length/2 + self.fishbone_length/2 + self.gnd_spacing, self.cell_length/2 + self.fishbone_length/2 + self.gnd_spacing,
-                              self.cell_length/2 - self.fishbone_length/2 - self.gnd_spacing, self.cell_length/2 - self.fishbone_length/2 - self.gnd_spacing,
+                              self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing, self.cell_length/2 + self.w_fishbone_line/2 + self.gnd_spacing,
+                              self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing, self.cell_length/2 - self.w_fishbone_line/2 - self.gnd_spacing,
                               0),
-                             (self.line_width/2+self.gnd_spacing, 
-                              self.line_width/2+self.gnd_spacing, gnd_height,
-                              gnd_height, self.line_width/2+self.gnd_spacing, 
-                              self.line_width/2+self.gnd_spacing)))
+                            (self.w_center_line/2+self.gnd_spacing, 
+                              self.w_center_line/2+self.gnd_spacing, gnd_height,
+                              gnd_height, self.w_center_line/2+self.gnd_spacing, 
+                              self.w_center_line/2+self.gnd_spacing)))
         else:
             return np.array(((self.cell_length, 0),
                              (gnd_height, gnd_height)))

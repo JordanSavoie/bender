@@ -2,7 +2,8 @@ import track, tline
 import numpy as np, matplotlib.pyplot as plt
 import ezdxf
 from ezdxf import units
-import math
+import ezdxf.path
+import progress.bar
 
 
 class Bender:  # uh oh
@@ -14,13 +15,17 @@ class Bender:  # uh oh
         self.unit_cell_vertices_count = self.floquet_unit_cell.vertices().shape[1]
         unit_cell_length = self.floquet_unit_cell.cell_length()
         arclength = trackseq.total_arclength()
-        self.n_floquet_cells = int(arclength // unit_cell_length)-1
+        self.n_floquet_cells = int(arclength // unit_cell_length)
+
+        bar = progress.bar.Bar('', max=self.n_floquet_cells)
         
         tline_vertices = np.array([[], []])
         offset = np.array([[0.0], [0.0]])
         for i in range(self.n_floquet_cells):
             tline_vertices = np.append(tline_vertices, floquet.vertices() + offset, axis=1)
             offset += np.array([[unit_cell_length], [0.0]])
+            bar.next()
+        bar.finish()
 
         self.tline_vertices = tline_vertices
         
@@ -45,12 +50,24 @@ class Bender:  # uh oh
         self.msp = self.doc.modelspace()
         self.doc.units = units.M
 
-    def write_bent_tline(self):
+    def write_bent_tline(self, fillet=False):
+        bar = progress.bar.Bar('', max=self.n_floquet_cells)
         for n in range(self.n_floquet_cells):
             first=self.unit_cell_vertices_count*n
             last=first+self.unit_cell_vertices_count
             polygon = [(self.bent_xs[i], self.bent_ys[i]) for i in range(first,last)]
-            self.msp.add_lwpolyline(polygon, close=True)
+            
+            if fillet:
+                p = ezdxf.path.from_vertices(polygon)
+                p.close()
+                pp = ezdxf.path.fillet(p.control_vertices(), radius=0.75e-6)
+                out = ezdxf.path.to_lwpolylines((pp,))
+                self.msp.add_lwpolyline(next(out), close=True)
+            else:
+                self.msp.add_lwpolyline(polygon, close=True)
+            
+            bar.next()
+        bar.finish()
 
     def write_dxf(self,filename):
         # Save the DXF file
@@ -119,17 +136,22 @@ if __name__ == '__main__':
     trackseq.append_track(straight1)
 
     bender = Bender(trackseq, floquet)
+    print('construct_tline')
     bender.construct_tline()
+    print('bend_tline')
     bender.bend_tline(plot=False)
+    print('write_bent_tline')
     bender.write_bent_tline()
 
+    print('mirror_tline')
     bender.mirror_tline()
+    print('bend_tline')
     bender.bend_tline(plot=False)
+    print('write_bent_tline')
     bender.write_bent_tline()
 
-    print(floquet.cell_length())
-    print(trackseq.total_arclength())
-    print(bender.n_floquet_cells)
+    print(f'{floquet.cell_length()*1e6:.1f}um unit cell * {bender.n_floquet_cells:d} unit cells should = {trackseq.total_arclength()*1e6:.0f}um track length')
 
+    print('write_dxf')
     bender.write_dxf(filename)
 

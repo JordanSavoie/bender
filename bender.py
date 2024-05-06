@@ -139,17 +139,58 @@ if __name__ == '__main__':
         trackseq.append_track(straight1)
     elif cfg_track['style'] == 'singletary':
         # filleted square wave shape
+
+        # math and variable assignment
         compact_width = cfg_track['compact_width']
+        compact_height = cfg_track['compact_height']
+        r_launch = cfg_track['radius_launch']
+        launch_len = cfg_track['launch_len']
+        n_half_periods = cfg_track['n_half_periods']
+        # working-width
+        working_width = compact_width - (2 * r_launch) - (2 * launch_len)
+        # half-period 'T'
+        T = working_width / n_half_periods
+        # semi-circle radius 'R'
+        R = T / 2
+        # amplitude of straight-line section
+        A = (compact_height / 2) - R
 
+        # Building track
+        x_start = launch_len + r_launch
+        x_end = x_start + n_half_periods * T
 
+        launchstraight1 = track.StraightTrack(np.array((0,0)), np.array((launch_len,0)))
+        launchcurve1 = track.ArcTrack(np.array((launch_len, r_launch)), r_launch, 3*np.pi/2, 2*np.pi, False)
+        launchstraight2 = track.StraightTrack(np.array((launch_len+r_launch, r_launch)), np.array((launch_len+r_launch, A)))
 
-        straight1 = track.StraightTrack(np.array((0, 0)), np.array((compact_width, 0)))
+        delaunchstraight1 = track.StraightTrack(np.array((x_end, -A)), np.array((x_end, -r_launch)))
+        delaunchcurve1 = track.ArcTrack(np.array((x_end+r_launch, -r_launch)), r_launch, -np.pi, -np.pi/2, True)
+        delaunchstraight2 = track.StraightTrack(np.array((x_end + r_launch, 0)),
+                                              np.array((x_end + r_launch + launch_len, 0)))
 
-        trackseq.append_track(straight1)
+        trackseq.append_track(launchstraight1)
+        trackseq.append_track(launchcurve1)
+        trackseq.append_track(launchstraight2)
 
+        if n_half_periods % 2 != 0:
+            print('n_half_periods must be even')
+            ValueError()
 
+        for i in range(n_half_periods):
+            curve, straight = None, None
+            if i % 2 == 0:
+                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, A)), R, -np.pi, 0, True)
+                straight = track.StraightTrack(np.array((x_start+(i+1)*T,A)), np.array((x_start+(i+1)*T,-A)))
+            else:
+                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, -A)), R, np.pi, 2*np.pi, False)
+                straight = track.StraightTrack(np.array((x_start+(i + 1) * T, -A)), np.array((x_start+(i + 1) * T, A)))
+            trackseq.append_track(curve)
+            if i < n_half_periods-1:
+                trackseq.append_track(straight)
 
-
+        trackseq.append_track(delaunchstraight1)
+        trackseq.append_track(delaunchcurve1)
+        trackseq.append_track(delaunchstraight2)
 
     bender = Bender(trackseq, floquet, cfg_tline['fillet_radius'])
     print('construct_tline')

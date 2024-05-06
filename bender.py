@@ -138,8 +138,18 @@ if __name__ == '__main__':
         trackseq.append_track(arc1)
         trackseq.append_track(straight1)
     elif cfg_track['style'] == 'singletary':
-        # square wave shape
-        pass
+        # filleted square wave shape
+        compact_width = cfg_track['compact_width']
+
+
+
+        straight1 = track.StraightTrack(np.array((0, 0)), np.array((compact_width, 0)))
+
+        trackseq.append_track(straight1)
+
+
+
+
 
     bender = Bender(trackseq, floquet, cfg_tline['fillet_radius'])
     print('construct_tline')

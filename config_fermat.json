@@ -23,7 +23,7 @@
 		"w_center_line": 8e-6,
 		"gnd_spacing": 2e-6,
 		"gnd_interdigitate": false,
-		"fillet_radius": 0.75e-6 
+		"fillet_radius": null
 	},
 	"track": {
 		"style": "fermat",

@@ -146,10 +146,9 @@ if __name__ == '__main__':
         r_launch = cfg_track['radius_launch']
         launch_len = cfg_track['launch_len']
         n_half_periods = cfg_track['n_half_periods']
-        # working-width
-        working_width = compact_width - (2 * r_launch) - (2 * launch_len)
-        # half-period 'T'
-        T = working_width / n_half_periods
+        T = cfg_track.get('half_period_length', 
+                          (compact_width - (2 * r_launch) - (2 * launch_len)) 
+                          /n_half_periods)
         # semi-circle radius 'R'
         R = T / 2
         # amplitude of straight-line section

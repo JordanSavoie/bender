@@ -8,13 +8,14 @@ import json, sys
 
 class Bender:  # uh oh
     def __init__(self, track_sequence, floquet_unit_cell, fillet_radius=None):
-        self.track_sequence, self.floquet_unit_cell = track_sequence, floquet_unit_cell
+        self.track_sequence = track_sequence
+        self.floquet_unit_cell = floquet_unit_cell
         self.fillet_radius = fillet_radius
-
         self.create_dxf()
         
     def construct_tline(self):
-        self.unit_cell_vertices_count = self.floquet_unit_cell.vertices().shape[1]
+        self.unit_cell_vertices_count = \
+            self.floquet_unit_cell.vertices().shape[1]
         unit_cell_length = self.floquet_unit_cell.cell_length()
         arclength = trackseq.total_arclength()
         self.n_floquet_cells = int(arclength // unit_cell_length)
@@ -24,7 +25,8 @@ class Bender:  # uh oh
         tline_vertices = np.array([[], []])
         offset = np.array([[0.0], [0.0]])
         for i in range(self.n_floquet_cells):
-            tline_vertices = np.append(tline_vertices, floquet.vertices() + offset, axis=1)
+            tline_vertices = np.append(tline_vertices,
+                                       floquet.vertices() + offset, axis=1)
             offset += np.array([[unit_cell_length], [0.0]])
             bar.next()
         bar.finish()
@@ -55,9 +57,10 @@ class Bender:  # uh oh
     def write_bent_tline(self):
         bar = progress.bar.Bar('', max=self.n_floquet_cells)
         for n in range(self.n_floquet_cells):
-            first=self.unit_cell_vertices_count*n
-            last=first+self.unit_cell_vertices_count
-            polygon = [(self.bent_xs[i], self.bent_ys[i]) for i in range(first,last)]
+            first = self.unit_cell_vertices_count*n
+            last = first + self.unit_cell_vertices_count
+            polygon = [(self.bent_xs[i], self.bent_ys[i])
+                       for i in range(first,last)]
             
             if self.fillet_radius is not None:
                 # create path object, fillet path at control vertices (noncollinear points)
@@ -93,8 +96,15 @@ if __name__ == '__main__':
     cfg_tline, cfg_track = cfgdict['tline'], cfgdict['track']
 
     floquet = tline.FloquetUnitCell()
-    for w_loaded_line, n_fishbone_cell in zip(cfg_tline['w_loaded_lines'], cfg_tline['n_fishbone_cells']):
-        fishbone = tline.FishboneUnitCell(cfg_tline['fishbone_cell_length'], cfg_tline['w_center_line'], cfg_tline['w_fishbone_line'], w_loaded_line, cfg_tline['gnd_spacing'], cfg_tline['gnd_interdigitate'])
+    for w_loaded_line, n_fishbone_cell in zip(cfg_tline['w_loaded_lines'], 
+                                              cfg_tline['n_fishbone_cells']):
+        fishbone = tline.FishboneUnitCell(
+            cfg_tline['fishbone_cell_length'],
+            cfg_tline['w_center_line'],
+            cfg_tline['w_fishbone_line'],
+            w_loaded_line,
+            cfg_tline['gnd_spacing'],
+            cfg_tline['gnd_interdigitate'])
         floquet.append_fishbones(fishbone, n_fishbone_cell)
 
     #Alec 10GHz
@@ -158,14 +168,21 @@ if __name__ == '__main__':
         x_start = launch_len + r_launch
         x_end = x_start + n_half_periods * T
 
-        launchstraight1 = track.StraightTrack(np.array((0,0)), np.array((launch_len,0)))
-        launchcurve1 = track.ArcTrack(np.array((launch_len, r_launch)), r_launch, 3*np.pi/2, 2*np.pi, False)
-        launchstraight2 = track.StraightTrack(np.array((launch_len+r_launch, r_launch)), np.array((launch_len+r_launch, A)))
+        launchstraight1 = track.StraightTrack(np.array((0,0)), 
+                                              np.array((launch_len,0)))
+        launchcurve1 = track.ArcTrack(np.array((launch_len, r_launch)), 
+                                      r_launch, 3*np.pi/2, 2*np.pi, False)
+        launchstraight2 = track.StraightTrack(
+            np.array((launch_len+r_launch, r_launch)), 
+            np.array((launch_len+r_launch, A)))
 
-        delaunchstraight1 = track.StraightTrack(np.array((x_end, -A)), np.array((x_end, -r_launch)))
-        delaunchcurve1 = track.ArcTrack(np.array((x_end+r_launch, -r_launch)), r_launch, -np.pi, -np.pi/2, True)
-        delaunchstraight2 = track.StraightTrack(np.array((x_end + r_launch, 0)),
-                                              np.array((x_end + r_launch + launch_len, 0)))
+        delaunchstraight1 = track.StraightTrack(np.array((x_end, -A)), 
+                                                np.array((x_end, -r_launch)))
+        delaunchcurve1 = track.ArcTrack(np.array((x_end+r_launch, -r_launch)), 
+                                        r_launch, -np.pi, -np.pi/2, True)
+        delaunchstraight2 = track.StraightTrack(
+            np.array((x_end + r_launch, 0)),
+            np.array((x_end + r_launch + launch_len, 0)))
 
         trackseq.append_track(launchstraight1)
         trackseq.append_track(launchcurve1)
@@ -178,11 +195,16 @@ if __name__ == '__main__':
         for i in range(n_half_periods):
             curve, straight = None, None
             if i % 2 == 0:
-                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, A)), R, -np.pi, 0, True)
-                straight = track.StraightTrack(np.array((x_start+(i+1)*T,A)), np.array((x_start+(i+1)*T,-A)))
+                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, A)),
+                                       R, -np.pi, 0, True)
+                straight = track.StraightTrack(np.array((x_start+(i+1)*T,A)), 
+                                               np.array((x_start+(i+1)*T,-A)))
             else:
-                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, -A)), R, np.pi, 2*np.pi, False)
-                straight = track.StraightTrack(np.array((x_start+(i + 1) * T, -A)), np.array((x_start+(i + 1) * T, A)))
+                curve = track.ArcTrack(np.array((x_start+(0.5 + i) * T, -A)),
+                                       R, np.pi, 2*np.pi, False)
+                straight = track.StraightTrack(
+                    np.array((x_start+(i + 1) * T, -A)),
+                    np.array((x_start+(i + 1) * T, A)))
             trackseq.append_track(curve)
             if i < n_half_periods-1:
                 trackseq.append_track(straight)

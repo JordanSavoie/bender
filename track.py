@@ -102,10 +102,19 @@ class FermatSpiralTrack(Track):
             return ArcTrack(arc_center_point, radius, -outer_normal_phi % np.pi, np.pi / 2, True)
 
 class ArcTrack(Track):
+    """
+        
+        :param center:
+        :param r: 
+        :param phi_start:
+        :param phi_end:
+        :param invert_phi:
+    """
     def __init__(self, center, r, phi_start, phi_end, invert_phi):
-        self.center, self.r, self.phi_start, self.phi_end = center, r, phi_start, phi_end
-        self.invert_phi=invert_phi
-        Track.__init__(self, r * (phi_end-phi_start))
+        self.center, self.r, self.phi_start, self.phi_end \
+            = center, r, phi_start, phi_end
+        self.invert_phi = invert_phi
+        Track.__init__(self, r * (phi_end - phi_start))
 
     def _vertices_normals(self, tline_xs):
         self.phis = tline_xs / self.r + self.phi_start
